@@ -1,0 +1,64 @@
+name: Auto Create Pull Request
+
+
+on:
+
+  push:
+
+    branches:
+
+      - "feature/**"
+
+
+
+permissions:
+
+  contents: read
+
+  pull-requests: write
+
+
+
+jobs:
+
+
+  create-pr:
+
+
+    runs-on: ubuntu-latest
+
+
+
+    steps:
+
+
+    - name: Checkout
+
+      uses: actions/checkout@v4
+
+
+
+    - name: Create Pull Request
+
+      uses: peter-evans/create-pull-request@v7
+
+      with:
+
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+        base: main
+
+        branch: ${{ github.ref_name }}
+
+        title: "Auto PR: ${{ github.ref_name }}"
+
+        body: |
+
+          Automated Pull Request
+
+          Branch:
+          ${{ github.ref_name }}
+
+        labels: |
+
+          automated-pr
