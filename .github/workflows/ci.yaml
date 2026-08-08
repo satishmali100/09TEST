@@ -1,13 +1,10 @@
-```yaml
-name: Terraform Non-Prod
+name: Terraform CI - Non Prod
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
+
   workflow_dispatch:
 
 permissions:
@@ -15,15 +12,14 @@ permissions:
   contents: read
 
 env:
-  TF_WORKING_DIR: ./Environments/non-prod
   ARM_USE_OIDC: true
-  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
-  terraform:
-    name: Terraform Plan
+  terraform-ci:
+    name: Terraform Validate & Plan
     runs-on: ubuntu-latest
 
     defaults:
@@ -32,41 +28,24 @@ jobs:
 
     steps:
 
-      # --------------------------------------------------
       # 1. Checkout repository
-      # --------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --------------------------------------------------
-      # 2. Azure Login using OIDC
-      # --------------------------------------------------
+      # 2. Azure Login
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.ARM_CLIENT_ID }}
-          tenant-id: ${{ secrets.ARM_TENANT_ID }}
-          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # --------------------------------------------------
       # 3. Setup Terraform
-      # --------------------------------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # --------------------------------------------------
-      # 4. Create terraform.tfvars from GitHub Secret
-      # --------------------------------------------------
-      - name: Create terraform.tfvars
-        env:
-          TFVARS: ${{ secrets.TFVARS_NON_PROD }}
-        run: |
-          printf '%s\n' "$TFVARS" > terraform.tfvars
-
-      # --------------------------------------------------
-      # 5. Verify Terraform files
-      # --------------------------------------------------
-      - name: Verify Terraform files
+      # 4. Verify Terraform files
+      - name: Verify Terraform Configuration
         run: |
           echo "Working directory:"
           pwd
@@ -76,39 +55,31 @@ jobs:
           ls -la
 
           echo ""
-          echo "terraform.tfvars exists:"
-          test -f terraform.tfvars && echo "YES" || echo "NO"
+          echo "Checking terraform.tfvars..."
+          test -f terraform.tfvars
+          echo "terraform.tfvars found"
 
-      # --------------------------------------------------
-      # 6. Terraform Init
-      # --------------------------------------------------
+      # 5. Terraform Init
       - name: Terraform Init
         run: |
           terraform init \
             -input=false \
             -no-color
 
-      # --------------------------------------------------
-      # 7. Terraform Format Check
-      # --------------------------------------------------
+      # 6. Terraform Format Check
       - name: Terraform Format Check
         run: |
           terraform fmt -check -recursive
 
-      # --------------------------------------------------
-      # 8. Terraform Validate
-      # --------------------------------------------------
+      # 7. Terraform Validate
       - name: Terraform Validate
         run: |
           terraform validate
 
-      # --------------------------------------------------
-      # 9. Terraform Plan
-      # --------------------------------------------------
+      # 8. Terraform Plan
       - name: Terraform Plan
         run: |
           terraform plan \
             -var-file="terraform.tfvars" \
             -input=false \
             -no-color
-```
