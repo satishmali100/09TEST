@@ -3,45 +3,46 @@ name: Auto Create Pull Request
 on:
   push:
     branches:
-      - "feature/**"
+      - feature/skm
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
-
 jobs:
-
   create-pr:
-
+    name: Create feature/skm → main PR
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check for existing PR
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --base main \
+            --head feature/skm \
+            --state open \
+            --json number \
+            --jq '.[0].number')
 
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
 
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.pr_number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base main \
+            --head feature/skm \
+            --title "feature/skm → main" \
+            --body "Automated pull request from feature/skm to main."
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v7
-      with:
-
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-        base: main
-
-        branch: ${{ github.ref_name }}
-
-        title: "PR: ${{ github.ref_name }}"
-
-        body: |
-          Automated PR created.
-
-          Source:
-          ${{ github.ref_name }}
-
-        labels: |
-          automated
-          #sk#
+      - name: PR Already Exists
+        if: steps.check-pr.outputs.pr_number != ''
+        run: |
+          echo "PR #${{ steps.check-pr.outputs.pr_number }} already exists."
