@@ -19,24 +19,9 @@ env:
 
 jobs:
 
-  # ==================================================
-  # Bootstrap Terraform Backend
-  # ==================================================
-
-  bootstrap:
-    name: Bootstrap Terraform Backend
-    uses: ./.github/workflows/bootstrap.yaml
-    secrets: inherit
-
-
-  # ==================================================
-  # Terraform Deployment
-  # ==================================================
-
   deploy:
 
     name: Terraform Apply
-    needs: bootstrap
     runs-on: ubuntu-latest
 
     defaults:
@@ -45,17 +30,17 @@ jobs:
 
     steps:
 
-      # -----------------------------------------------
+      # ==========================================
       # Checkout
-      # -----------------------------------------------
+      # ==========================================
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
 
-      # -----------------------------------------------
+      # ==========================================
       # Terraform
-      # -----------------------------------------------
+      # ==========================================
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -63,9 +48,9 @@ jobs:
           terraform_version: 1.5.0
 
 
-      # -----------------------------------------------
+      # ==========================================
       # Azure Login
-      # -----------------------------------------------
+      # ==========================================
 
       - name: Azure Login
         uses: azure/login@v2
@@ -75,28 +60,9 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 
-      # -----------------------------------------------
-      # Verify Terraform Backend
-      # -----------------------------------------------
-
-      - name: Verify Terraform Backend
-        run: |
-          echo "Azure Account:"
-          az account show
-
-          echo "Terraform State Resource Group:"
-          az group show \
-            --name tfstate-rg
-
-          echo "Terraform State Storage Account:"
-          az storage account show \
-            --name satishtfstate001 \
-            --resource-group tfstate-rg
-
-
-      # -----------------------------------------------
+      # ==========================================
       # Terraform Init
-      # -----------------------------------------------
+      # ==========================================
 
       - name: Terraform Init
         working-directory: Environments/non-prod
@@ -104,9 +70,9 @@ jobs:
           terraform init -reconfigure
 
 
-      # -----------------------------------------------
+      # ==========================================
       # Terraform Apply
-      # -----------------------------------------------
+      # ==========================================
 
       - name: Terraform Apply
         working-directory: Environments/non-prod
@@ -118,9 +84,9 @@ jobs:
             -no-color
 
 
-      # ==================================================
-      # AKS DEPLOYMENT - CURRENTLY DISABLED
-      # ==================================================
+      # ==========================================
+      # AKS - DISABLED FOR NOW
+      # ==========================================
 
       # - name: Get AKS Credentials
       #   run: |
@@ -133,6 +99,11 @@ jobs:
       #   run: |
       #     kubectl get nodes
       #     kubectl get namespaces
+
+
+      # ==========================================
+      # Helm - DISABLED FOR NOW
+      # ==========================================
 
       # - name: Deploy Helm Chart
       #   run: |
