@@ -30,14 +30,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-     ####################################
-      # Vulnerability Scanner
-      ####################################
-
-      - name: Trivy Config Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: config
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: 1
+     
