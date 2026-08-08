@@ -13,9 +13,9 @@ permissions:
 
 env:
   ARM_USE_OIDC: true
-  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
   terraform-ci:
@@ -28,30 +28,23 @@ jobs:
 
     steps:
 
-      # 1. Checkout code
+      # 1. Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Azure Login using OIDC
+      # 2. Azure Login
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.ARM_CLIENT_ID }}
-          tenant-id: ${{ secrets.ARM_TENANT_ID }}
-          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # 3. Install Terraform
+      # 3. Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # 4. Create terraform.tfvars
-      - name: Create terraform.tfvars
-        env:
-          TFVARS: ${{ secrets.TFVARS_NON_PROD }}
-        run: |
-          printf '%s\n' "$TFVARS" > terraform.tfvars
-
-      # 5. Verify Terraform configuration
+      # 4. Verify Terraform files
       - name: Verify Terraform Configuration
         run: |
           echo "Working directory:"
@@ -63,28 +56,27 @@ jobs:
 
           echo ""
           echo "Checking terraform.tfvars..."
-          test -s terraform.tfvars
+          test -f terraform.tfvars
+          echo "terraform.tfvars found"
 
-          echo "terraform.tfvars created successfully"
-
-      # 6. Terraform Init
+      # 5. Terraform Init
       - name: Terraform Init
         run: |
           terraform init \
             -input=false \
             -no-color
 
-      # 7. Terraform Format Check
+      # 6. Terraform Format Check
       - name: Terraform Format Check
         run: |
           terraform fmt -check -recursive
 
-      # 8. Terraform Validate
+      # 7. Terraform Validate
       - name: Terraform Validate
         run: |
           terraform validate
 
-      # 9. Terraform Plan
+      # 8. Terraform Plan
       - name: Terraform Plan
         run: |
           terraform plan \
