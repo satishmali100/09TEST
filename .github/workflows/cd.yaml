@@ -1,7 +1,7 @@
-name: Deploy AKS Infra and Apps #
+name: Deploy AKS Infra and Apps
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -18,39 +18,19 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
-
   deploy:
-
     name: Terraform Apply
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        shell: bash
-
     steps:
-
-      # ==========================================
-      # Checkout
-      # ==========================================
 
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-
-      # ==========================================
-      # Terraform
-      # ==========================================
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.0
-
-
-      # ==========================================
-      # Azure Login
-      # ==========================================
 
       - name: Azure Login
         uses: azure/login@v2
@@ -59,20 +39,9 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-
-      # ==========================================
-      # Terraform Init
-      # ==========================================
-
       - name: Terraform Init
         working-directory: Environments/non-prod
-        run: |
-          terraform init -reconfigure
-
-
-      # ==========================================
-      # Terraform Apply
-      # ==========================================
+        run: terraform init -reconfigure
 
       - name: Terraform Apply
         working-directory: Environments/non-prod
@@ -83,10 +52,7 @@ jobs:
             -auto-approve \
             -no-color
 
-
-      # ==========================================
-      # AKS - DISABLED FOR NOW
-      # ==========================================
+      # AKS intentionally disabled
 
       # - name: Get AKS Credentials
       #   run: |
@@ -100,10 +66,7 @@ jobs:
       #     kubectl get nodes
       #     kubectl get namespaces
 
-
-      # ==========================================
-      # Helm - DISABLED FOR NOW
-      # ==========================================
+      # Helm intentionally disabled
 
       # - name: Deploy Helm Chart
       #   run: |
