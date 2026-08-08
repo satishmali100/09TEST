@@ -1,5 +1,5 @@
 name: Bootstrap Terraform Backend
-@sm#
+
 on:
   workflow_call:
 
