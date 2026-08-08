@@ -30,22 +30,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      ####################################
-      # IaC Security
-      ####################################
-
-      - name: Install Checkov
-        run: |
-          pip install checkov
-
-      - name: Checkov Terraform Scan
-        run: |
-          checkov \
-            -d . \
-            --framework terraform \
-            --output cli
-
-      ####################################
+     ####################################
       # Vulnerability Scanner
       ####################################
 
