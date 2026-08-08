@@ -18,15 +18,8 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
-
-  bootstrap:
-    name: Ensure Terraform Backend
-    uses: ./.github/workflows/bootstrap.yaml
-    secrets: inherit
-
   terraform-ci:
     name: Terraform Validate and Plan
-    needs: bootstrap
     runs-on: ubuntu-latest
 
     defaults:
@@ -69,6 +62,5 @@ jobs:
         working-directory: Environments/non-prod
         run: |
           terraform plan \
-            -var-file="terraform.tfvars" \
             -input=false \
             -no-color
