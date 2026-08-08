@@ -28,11 +28,11 @@ jobs:
 
     steps:
 
-      # 1. Checkout repository
+      # 1. Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Azure Login
+      # 2. Azure Login using OIDC
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -40,11 +40,18 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # 3. Setup Terraform
+      # 3. Install Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # 4. Verify Terraform files
+      # 4. Create terraform.tfvars
+      - name: Create terraform.tfvars
+        env:
+          TFVARS: ${{ secrets.TFVARS_NON_PROD }}
+        run: |
+          printf '%s\n' "$TFVARS" > terraform.tfvars
+
+      # 5. Verify Terraform configuration
       - name: Verify Terraform Configuration
         run: |
           echo "Working directory:"
@@ -59,24 +66,26 @@ jobs:
           test -f terraform.tfvars
           echo "terraform.tfvars found"
 
-      # 5. Terraform Init
+          echo "terraform.tfvars created successfully"
+
+      # 6. Terraform Init
       - name: Terraform Init
         run: |
           terraform init \
             -input=false \
             -no-color
 
-      # 6. Terraform Format Check
+      # 7. Terraform Format Check
       - name: Terraform Format Check
         run: |
           terraform fmt -check -recursive
 
-      # 7. Terraform Validate
+      # 8. Terraform Validate
       - name: Terraform Validate
         run: |
           terraform validate
 
-      # 8. Terraform Plan
+      # 9. Terraform Plan
       - name: Terraform Plan
         run: |
           terraform plan \
