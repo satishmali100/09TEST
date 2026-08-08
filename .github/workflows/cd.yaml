@@ -3,7 +3,7 @@ name: Deploy AKS Infra and Apps
 on:
   pull_request:
     branches:
-      - main
+      - feature/skm
 
   workflow_dispatch:
 
