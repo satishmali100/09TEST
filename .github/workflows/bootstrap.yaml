@@ -1,5 +1,4 @@
-name: Bootstrap Terraform Backend#
-#sks#
+name: Bootstrap Terraform Backend
 
 on:
   workflow_call:
@@ -45,6 +44,19 @@ jobs:
       - name: Create Blob Container
         run: |
           az storage container create \
+            --name "$TFSTATE_CONTAINER" \
+            --account-name "$TFSTATE_STORAGE" \
+            --auth-mode login
+
+      - name: Verify Backend
+        run: |
+          az account show
+
+          az storage account show \
+            --name "$TFSTATE_STORAGE" \
+            --resource-group "$TFSTATE_RG"
+
+          az storage container show \
             --name "$TFSTATE_CONTAINER" \
             --account-name "$TFSTATE_STORAGE" \
             --auth-mode login
