@@ -48,6 +48,13 @@ jobs:
         run: |
           terraform fmt -check -recursive
 
+      - name: Create Terraform Variables File
+        working-directory: Environments/non-prod
+        env:
+          TFVARS_CONTENT: ${{ secrets.TFVARS_CONTENT }}
+        run: |
+          printf '%s\n' "$TFVARS_CONTENT" > terraform.tfvars
+
       - name: Terraform Init
         working-directory: Environments/non-prod
         run: |
@@ -62,5 +69,6 @@ jobs:
         working-directory: Environments/non-prod
         run: |
           terraform plan \
+            -var-file="terraform.tfvars" \
             -input=false \
             -no-color
