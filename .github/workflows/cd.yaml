@@ -1,0 +1,142 @@
+name: Deploy AKS Infra and Apps
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_USE_OIDC: true
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+
+  # ==================================================
+  # Bootstrap Terraform Backend
+  # ==================================================
+
+  bootstrap:
+    name: Bootstrap Terraform Backend
+    uses: ./.github/workflows/bootstrap.yaml
+    secrets: inherit
+
+
+  # ==================================================
+  # Terraform Deployment
+  # ==================================================
+
+  deploy:
+
+    name: Terraform Apply
+    needs: bootstrap
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+
+      # -----------------------------------------------
+      # Checkout
+      # -----------------------------------------------
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+
+      # -----------------------------------------------
+      # Terraform
+      # -----------------------------------------------
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+
+      # -----------------------------------------------
+      # Azure Login
+      # -----------------------------------------------
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+
+      # -----------------------------------------------
+      # Verify Terraform Backend
+      # -----------------------------------------------
+
+      - name: Verify Terraform Backend
+        run: |
+          echo "Azure Account:"
+          az account show
+
+          echo "Terraform State Resource Group:"
+          az group show \
+            --name tfstate-rg
+
+          echo "Terraform State Storage Account:"
+          az storage account show \
+            --name satishtfstate001 \
+            --resource-group tfstate-rg
+
+
+      # -----------------------------------------------
+      # Terraform Init
+      # -----------------------------------------------
+
+      - name: Terraform Init
+        working-directory: Environments/non-prod
+        run: |
+          terraform init -reconfigure
+
+
+      # -----------------------------------------------
+      # Terraform Apply
+      # -----------------------------------------------
+
+      - name: Terraform Apply
+        working-directory: Environments/non-prod
+        run: |
+          terraform apply \
+            -var-file="terraform.tfvars" \
+            -input=false \
+            -auto-approve \
+            -no-color
+
+
+      # ==================================================
+      # AKS DEPLOYMENT - CURRENTLY DISABLED
+      # ==================================================
+
+      # - name: Get AKS Credentials
+      #   run: |
+      #     az aks get-credentials \
+      #       --resource-group satish-rg \
+      #       --name aks-cluster \
+      #       --overwrite-existing
+
+      # - name: Verify AKS Cluster
+      #   run: |
+      #     kubectl get nodes
+      #     kubectl get namespaces
+
+      # - name: Deploy Helm Chart
+      #   run: |
+      #     helm upgrade --install myapp \
+      #       ./helm/my-app-chart \
+      #       --namespace default \
+      #       --create-namespace
