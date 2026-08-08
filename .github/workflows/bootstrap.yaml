@@ -3,6 +3,8 @@ name: Bootstrap Terraform Backend
 on:
   workflow_call:
 
+  workflow_dispatch:
+
 permissions:
   id-token: write
   contents: read
@@ -19,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -47,3 +50,25 @@ jobs:
             --name "$TFSTATE_CONTAINER" \
             --account-name "$TFSTATE_STORAGE" \
             --auth-mode login
+
+      - name: Verify Backend
+        run: |
+          echo "=== Azure Account ==="
+          az account show
+
+          echo "=== Resource Group ==="
+          az group show \
+            --name "$TFSTATE_RG"
+
+          echo "=== Storage Account ==="
+          az storage account show \
+            --name "$TFSTATE_STORAGE" \
+            --resource-group "$TFSTATE_RG"
+
+          echo "=== Container ==="
+          az storage container show \
+            --name "$TFSTATE_CONTAINER" \
+            --account-name "$TFSTATE_STORAGE" \
+            --auth-mode login
+
+          echo "Terraform backend is ready."
