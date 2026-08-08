@@ -1,0 +1,49 @@
+name: Bootstrap Terraform Backend
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  LOCATION: centralindia
+  TFSTATE_RG: tfstate-rg
+  TFSTATE_STORAGE: satishtfstate001
+  TFSTATE_CONTAINER: tfstate
+
+jobs:
+  bootstrap:
+    name: Ensure Terraform Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name "$TFSTATE_RG" \
+            --location "$LOCATION"
+
+      - name: Create Storage Account
+        run: |
+          az storage account create \
+            --name "$TFSTATE_STORAGE" \
+            --resource-group "$TFSTATE_RG" \
+            --location "$LOCATION" \
+            --sku Standard_LRS \
+            --kind StorageV2
+
+      - name: Create Blob Container
+        run: |
+          az storage container create \
+            --name "$TFSTATE_CONTAINER" \
+            --account-name "$TFSTATE_STORAGE" \
+            --auth-mode login
