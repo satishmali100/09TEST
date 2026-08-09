@@ -1,0 +1,23 @@
+# ========================================
+# CODEOWNERS - Repository Reviewers
+# ========================================
+
+# Default reviewers for all files
+* @satishmali100 @dhaanimali100 @rajeshsaini160621 @smmydear
+
+# Terraform files (.tf) - Architect mandatory
+*.tf @dhaanimali100 @rajeshsaini160621
+
+# Terraform folder
+/terraform/ @dhaanimali100 @rajeshsaini160621
+
+# Security related files
+/security/ @smmydear
+*secret* @smmydear
+*key* @smmydear
+
+# Modules folder
+/modules/ @rajeshsaini160621
+
+# Environments folder
+/Environments/ @dhaanimali100
