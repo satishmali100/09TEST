@@ -20,10 +20,13 @@ env:
 jobs:
   terraform-ci:
     name: Terraform Validate & Plan
-    runs-on: ubuntu-latest
+
+    # Your Windows self-hosted runner
+    runs-on: [self-hosted, windows, x64]
 
     defaults:
       run:
+        shell: powershell
         working-directory: ./Environments/non-prod
 
     steps:
@@ -47,24 +50,26 @@ jobs:
       # 4. Verify Terraform files
       - name: Verify Terraform Configuration
         run: |
-          echo "Working directory:"
-          pwd
+          Write-Host "Working directory:"
+          Get-Location
 
-          echo ""
-          echo "Terraform files:"
-          ls -la
+          Write-Host ""
+          Write-Host "Terraform files:"
+          Get-ChildItem -Force
 
-          echo ""
-          echo "Checking terraform.tfvars..."
-          test -f terraform.tfvars
-          echo "terraform.tfvars found"
+          Write-Host ""
+          Write-Host "Checking terraform.tfvars..."
+
+          if (-not (Test-Path ".\terraform.tfvars")) {
+              throw "terraform.tfvars not found"
+          }
+
+          Write-Host "terraform.tfvars found"
 
       # 5. Terraform Init
       - name: Terraform Init
         run: |
-          terraform init \
-            -input=false \
-            -no-color
+          terraform init -input=false -no-color
 
       # 6. Terraform Format Check
       - name: Terraform Format Check
@@ -79,7 +84,7 @@ jobs:
       # 8. Terraform Plan
       - name: Terraform Plan
         run: |
-          terraform plan \
-            -var-file="terraform.tfvars" \
-            -input=false \
+          terraform plan `
+            -var-file="terraform.tfvars" `
+            -input=false `
             -no-color
